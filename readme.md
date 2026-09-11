@@ -12,7 +12,7 @@
  - Wi-Fi Channel State Information (CSI) for complementary motion and context evidence.
  - 3D Human Mesh Recovery (3D HMR) as part of the vision representation.
 
- No separate radar, mmWave, point-cloud, or other sensing subsystem is used.
+ No separate radar, mmWave, point, or other sensing subsystem is used.
 
  ## 2. Canonical Workflow
 
