@@ -10,7 +10,7 @@ from mediapipe.tasks.python.vision import drawing_utils
 from mediapipe.tasks.python.vision import drawing_styles
 
 
-MODEL_PATH = r"models\pose_landmarker.task"
+MODEL_PATH = r"models\\pose_landmarker.task"
 OUTPUT_DIR = "outputs"
 
 CAMERA_ID = 0
