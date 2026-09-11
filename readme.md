@@ -281,7 +281,81 @@
  | EPIC-KITCHENS | Human-object interaction reference |
  | HOI4D | Human-object interaction reference |
 
- ## 14. Deployment and Runtime
+ ## 14. Project Setup and Model Files
+
+### Python environment
+
+Create and activate a project virtual environment:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+Install the Python dependencies from `requirements.txt`:
+
+```powershell
+pip install -r requirements.txt
+```
+
+If `requirements.txt` needs to be generated or updated from the active virtual environment:
+
+```powershell
+pip freeze > requirements.txt
+```
+
+### MediaPipe Pose Landmarker model
+
+The MediaPipe Python package and the Pose Landmarker model file are separate.
+
+The Python package is installed through `requirements.txt` (or directly with
+`pip install mediapipe`). The `.task` model file is downloaded separately
+and is not a Python package dependency.
+
+Create the model directory and download the Pose Landmarker Heavy model:
+
+```powershell
+mkdir models -ErrorAction SilentlyContinue
+
+Invoke-WebRequest -Uri "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task" -OutFile "models\pose_landmarker.task"
+```
+
+The expected local path is:
+
+```text
+models/
+└── pose_landmarker.task
+```
+
+The application should reference the model using:
+
+```python
+model_path = "models\\pose_landmarker.task"
+```
+
+### Git handling of model files
+
+Model weight files are kept locally and are not committed to Git. Add the
+following rule to `.gitignore`:
+
+```gitignore
+models/*.task
+```
+
+Each developer should download the required model files locally after
+cloning the repository.
+
+Do not ignore the entire `models/` directory because future project
+artifacts may need to be tracked there.
+
+### Current setup distinction
+
+- `requirements.txt` → Python dependencies such as `mediapipe`, `opencv-python`, `numpy`, and other packages used by the project.
+- `models/*.task` → downloaded model weight files, kept outside Git.
+- `.venv/` → local Python virtual environment, kept outside Git.
+- `README.md` → setup and model-download instructions.
+
+## 15. Deployment and Runtime
 
  ### Deployment targets
 
@@ -305,7 +379,7 @@
  | Stream thread | Video and RTSP |
  | Async server | FastAPI and WebSocket |
 
- ## 15. Failure Handling
+ ## 16. Failure Handling
 
  | Failure or condition | Response |
  | --- | --- |
@@ -318,7 +392,7 @@
  | Low confidence | Do not transition state |
  | Experiment complete | Close session and write final record |
 
- ## 16. Prototype Build Plan
+ ## 17. Prototype Build Plan
 
  1. Freeze a 5-7 step experiment protocol and its JSON FSM.
  2. Build a fixed-camera mock testbed and collect complete sequences.
@@ -333,7 +407,7 @@
  11. Demonstrate CSI-assisted robustness under visual uncertainty.
  12. Optimize and measure the complete pipeline on target edge hardware.
 
- ## 17. Judge Demonstration
+ ## 18. Judge Demonstration
 
  The demonstration should show:
 
@@ -344,7 +418,7 @@
  5. Recovery of visual confidence and successful experiment completion.
  6. The resulting structured log and dashboard state.
 
- ## 18. Core Innovation
+ ## 19. Core Innovation
 
  - Experiment-aware temporal HAR.
  - Probabilistic perception separated from deterministic protocol validation.
@@ -353,13 +427,13 @@
  - Offline, edge-first operation.
  - Proactive next-step experiment guidance.
 
- ## 19. Final Architecture Statement
+ ## 20. Final Architecture Statement
 
  The final proposed system is an offline, edge-deployed, experiment-aware HAR co-pilot. A fixed RGB camera feeds object detection and tracking, body and hand estimation, hand-object interaction, and 3D human mesh recovery. In parallel, Wi-Fi CSI is captured and processed into a compact 32-D motion embedding. Vision/HMR and CSI representations are fused using confidence-aware multimodal reasoning, accumulated over a 30-frame temporal window, and classified by an LSTM into an experiment step and confidence. Debounce confirms stable actions, after which a JSON-defined finite-state machine validates the action against the expected protocol state. Valid transitions advance the experiment and trigger next-step guidance; violations generate corrective offline voice alerts. An asynchronous event bus distributes events to structured logging, local video/RTSP, and a FastAPI/WebSocket dashboard.
 
- ## 20. Design Boundaries
+ ## 21. Design Boundaries
 
- **Included:** Fixed RGB camera, OpenCV, YOLOv8-nano, ByteTrack, MediaPipe Pose/Hands, hand-object interaction, 3D HMR (ROMP/PARE), Wi-Fi CSI, CSI processing, 1D-CNN CSI embedding, confidence-aware fusion, LSTM, debounce, FSM, event bus, voice, logging, video, RTSP, and dashboard.
+ **Included:** Fixed RGB camera, OpenCV, YOLOv8-nano, ByteTrack, MediaPipe Pose/Hands, hand-object interaction, 3D HMR (ROMP/PARE), Wi-Fi CSI, CSI processing, 1D-CNN CSI embedding, confidence-aware fusion, LSTM, debounce, FSM, event bus, voice, logging, video, RTSP, dashboard, and documented local model-file setup.
 
  **Not included:** Any separate radar, mmWave, point-cloud, or other non-CSI sensing subsystem.
 
