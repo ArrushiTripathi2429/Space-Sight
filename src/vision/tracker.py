@@ -10,6 +10,13 @@ class ObjectTracker:
     def update(self, detections):
 
         if not detections:
+            self.tracker.update_with_detections(
+                sv.Detections(
+                    xyxy=np.empty((0, 4), dtype=np.float32),
+                    confidence=np.empty(0, dtype=np.float32),
+                    class_id=np.empty(0, dtype=np.int32)
+                )
+            )
             return []
 
         xyxy = np.array(
