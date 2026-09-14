@@ -21,3 +21,11 @@ models/*.task
 # Temporary files
 *.tmp
 *.log
+
+
+#yolo model file
+*.pt
+
+#detectins
+data/
+
