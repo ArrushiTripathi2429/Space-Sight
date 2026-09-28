@@ -16,14 +16,14 @@ class Camera:
         if not ret:
             return None
 
-        timestamp = time.time()
+        timestamp_ms = time.time_ns() // 1_000_000
 
         self.frame_id += 1
 
         return {
             "frame": frame,
             "frame_id": self.frame_id,
-            "timestamp": timestamp
+            "timestamp_ms": timestamp_ms
         }
 
     def release(self):

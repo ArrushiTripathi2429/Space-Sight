@@ -283,6 +283,32 @@
 
  ## 14. Project Setup and Model Files
 
+### Run the integrated live pipeline
+
+From the repository root, after installing the dependencies and downloading
+both MediaPipe task files, start the webcam pipeline with:
+
+```powershell
+python src\main.py
+```
+
+Each processed frame is written to `data/processed/detections.jsonl` with the
+following structure:
+
+```text
+FrameData(
+	frame_id=142,
+	timestamp_ms=..., 
+	objects=[...],
+	pose={...},
+	hands={...},
+	interactions=[...],
+)
+```
+
+Press `Esc` to stop the live pipeline. The `pose`, `hands`, and `interactions`
+fields are ready to become the input sequence for a future LSTM and FSM.
+
 ### Python environment
 
 Create and activate a project virtual environment:
