@@ -7,10 +7,10 @@ flatbuffers==25.12.19
 fonttools==4.65.0
 kiwisolver==1.5.1
 matplotlib==3.11.1
+# OpenCV with the extra modules used by the vision pipeline.
 mediapipe==1.0.1
 numpy==2.5.3
 opencv-contrib-python==5.0.0.93
-opencv-python==5.0.0.93
 packaging==26.3
 pandas==3.0.5
 pillow==12.3.0

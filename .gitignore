@@ -4,6 +4,9 @@
 # Python cache
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Environment variables / secrets
 .env
@@ -21,11 +24,22 @@ models/*.task
 # Temporary files
 *.tmp
 *.log
+*.bak
+*.swp
+*.swo
+Thumbs.db
 
 
 #yolo model file
 *.pt
 
-#detectins
+# Generated detection data
 data/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+*.coverage
+htmlcov/
 
