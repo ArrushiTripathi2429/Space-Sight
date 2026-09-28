@@ -1,10 +1,15 @@
 import cv2
 import json
 import os
+from dataclasses import asdict
 
+from common.schemas import FrameData
 from vision.camera import Camera
 from vision.detector import ObjectDetector
 from vision.tracker import ObjectTracker
+from human.hand_pipeline import HandLandmarker
+from human.interaction import process_frame
+from human.pose_pipeline import PoseLandmarker
 
 
 def main():
@@ -17,6 +22,8 @@ def main():
     )
 
     tracker = ObjectTracker()
+    hand_landmarker = HandLandmarker()
+    pose_landmarker = PoseLandmarker()
 
     os.makedirs("data/processed", exist_ok=True)
 
@@ -40,7 +47,7 @@ def main():
 
             frame = data["frame"]
             frame_id = data["frame_id"]
-            timestamp = data["timestamp"]
+            timestamp_ms = data["timestamp_ms"]
 
             # -------------------------
             # 2. YOLO DETECTION
@@ -56,34 +63,51 @@ def main():
                 detections
             )
 
+            class_names = {
+                detection["class_id"]: detection["class"]
+                for detection in detections
+            }
+            tracked_objects = [
+                {
+                    **tracked_object,
+                    "class": class_names.get(
+                        tracked_object["class_id"],
+                        "unknown",
+                    ),
+                }
+                for tracked_object in tracked_objects
+            ]
+
+            height, width = frame.shape[:2]
+            hands = hand_landmarker.detect(frame)
+            pose = pose_landmarker.detect(frame)
+            interactions = process_frame(
+                hands=hands,
+                objects=tracked_objects,
+                image_width=width,
+                image_height=height,
+                select_best=True,
+            )
+
             # -------------------------
             # 4. STANDARD OUTPUT
             # -------------------------
 
-            detection_data = {
-                "frame_id": frame_id,
-                "timestamp": timestamp,
-                "objects": []
-            }
-
-            for obj in tracked_objects:
-
-                class_id = obj["class_id"]
-
-                # Find original detection class
-                class_name = "unknown"
-
-                for detection in detections:
-                    if detection.get("class_id") == class_id:
-                        class_name = detection["class"]
-                        break
-
-                detection_data["objects"].append({
-                    "class": class_name,
+            frame_data = FrameData(
+                frame_id=frame_id,
+                timestamp_ms=timestamp_ms,
+                objects=[{
+                    "class": obj["class"],
+                    "class_id": obj["class_id"],
                     "bbox": obj["bbox"],
                     "confidence": obj["confidence"],
                     "track_id": obj["track_id"]
-                })
+                } for obj in tracked_objects],
+                pose=pose,
+                hands=hands,
+                interactions=interactions,
+            )
+            detection_data = asdict(frame_data)
 
             # -------------------------
             # 5. SAVE
@@ -97,7 +121,7 @@ def main():
             # 6. VISUALIZATION
             # -------------------------
 
-            for obj in detection_data["objects"]:
+            for obj in frame_data.objects:
 
                 x1, y1, x2, y2 = obj["bbox"]
 
@@ -125,6 +149,26 @@ def main():
                     2
                 )
 
+            for interaction in interactions:
+                if interaction["state"] == "NONE":
+                    continue
+
+                x, y = interaction["hand_reference_point"].values()
+                label = (
+                    f'{interaction["hand"]} -> '
+                    f'{interaction["object_class"]}: '
+                    f'{interaction["state"]}'
+                )
+                cv2.putText(
+                    frame,
+                    label,
+                    (int(x), int(y)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 0, 255),
+                    2,
+                )
+
             # Frame information
             cv2.putText(
                 frame,
@@ -148,6 +192,8 @@ def main():
     finally:
 
         output_file.close()
+        hand_landmarker.close()
+        pose_landmarker.close()
         camera.release()
         cv2.destroyAllWindows()
 
