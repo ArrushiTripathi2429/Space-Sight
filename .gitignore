@@ -31,8 +31,8 @@ Thumbs.db
 
 
 #yolo model file
-*.pt
-
+#finetune kiya hua best weight hai use dir me dalna pdega.
+best.pt krke h
 # Generated detection data
 data/
 
@@ -42,4 +42,8 @@ dist/
 *.egg-info/
 *.coverage
 htmlcov/
+
+#finetuning 
+Finetuning.zip
+
 
