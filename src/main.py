@@ -1,9 +1,8 @@
 import cv2
-import json
-import os
 from dataclasses import asdict
 
 from common.schemas import FrameData
+from common.recording import FrameRecorder
 from vision.camera import Camera
 from vision.detector import ObjectDetector
 from vision.tracker import ObjectTracker
@@ -25,12 +24,7 @@ def main():
     hand_landmarker = HandLandmarker()
     pose_landmarker = PoseLandmarker()
 
-    os.makedirs("data/processed", exist_ok=True)
-
-    output_file = open(
-        "data/processed/detections.jsonl",
-        "w"
-    )
+    recorder = FrameRecorder()
 
     try:
 
@@ -87,7 +81,7 @@ def main():
                 objects=tracked_objects,
                 image_width=width,
                 image_height=height,
-                select_best=True,
+                select_best=False,
             )
 
             # -------------------------
@@ -114,9 +108,7 @@ def main():
             # 5. SAVE
             # -------------------------
 
-            output_file.write(
-                json.dumps(detection_data) + "\n"
-            )
+            recorder.write(detection_data)
 
             # -------------------------
             # 6. VISUALIZATION
@@ -192,7 +184,7 @@ def main():
 
     finally:
 
-        output_file.close()
+        recorder.close()
         hand_landmarker.close()
         pose_landmarker.close()
         camera.release()
