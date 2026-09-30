@@ -17,8 +17,8 @@ def main():
     camera = Camera(camera_id=0)
 
     detector = ObjectDetector(
-        model_path="yolov8n.pt",
-        confidence=0.2  
+        model_path="models/best.pt",
+        confidence=0.3  
     )
 
     tracker = ObjectTracker()
@@ -64,15 +64,16 @@ def main():
             )
 
             class_names = {
-                detection["class_id"]: detection["class"]
+                detection["class_id"]: detection["class_name"]
                 for detection in detections
             }
+
             tracked_objects = [
                 {
                     **tracked_object,
-                    "class": class_names.get(
+                    "class_name": class_names.get(
                         tracked_object["class_id"],
-                        "unknown",
+                        "unknown"
                     ),
                 }
                 for tracked_object in tracked_objects
@@ -97,7 +98,7 @@ def main():
                 frame_id=frame_id,
                 timestamp_ms=timestamp_ms,
                 objects=[{
-                    "class": obj["class"],
+                    "class_name": obj["class_name"],
                     "class_id": obj["class_id"],
                     "bbox": obj["bbox"],
                     "confidence": obj["confidence"],
@@ -126,10 +127,10 @@ def main():
                 x1, y1, x2, y2 = obj["bbox"]
 
                 label = (
-                    f'{obj["class"]} '
+                    f'{obj["class_name"]} '
                     f'ID:{obj["track_id"]} '
                     f'{obj["confidence"]:.2f}'
-                )
+                )           
 
                 cv2.rectangle(
                     frame,

@@ -3,7 +3,11 @@ from ultralytics import YOLO
 
 class ObjectDetector:
 
-    def __init__(self, model_path="yolov8n.pt", confidence=0.3):
+    def __init__(
+        self,
+        model_path="models/yolov8n.pt",
+        confidence=0.3
+    ):
         self.model = YOLO(model_path)
         self.confidence = confidence
 
@@ -37,7 +41,7 @@ class ObjectDetector:
             class_name = self.model.names[class_id]
 
             detections.append({
-                "class": class_name,
+                "class_name": class_name,
                 "class_id": class_id,
                 "bbox": [
                     int(x1),

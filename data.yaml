@@ -1,0 +1,8 @@
+path: ./datset
+
+train: images/train
+val: images/val
+
+names:
+  0: red_box
+  1: yellow_box

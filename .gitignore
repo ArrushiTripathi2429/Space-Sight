@@ -43,3 +43,7 @@ dist/
 *.coverage
 htmlcov/
 
+#finetuning 
+Finetuning.zip
+
+
