@@ -17,13 +17,16 @@ from action.action_recognizer import (
     InteractionFrame,
 )
 
+from action.semantic_action import (
+    SemanticActionMapper,
+)
+
 
 def main():
 
     camera = Camera(
         camera_id=0
     )
-
 
     detector = ObjectDetector(
         model_path="models/best.pt",
@@ -33,13 +36,13 @@ def main():
     tracker = ObjectTracker()
 
     hand_landmarker = HandLandmarker()
-
     pose_landmarker = PoseLandmarker()
 
     action_recognizer = ActionRecognizer()
 
-    recorder = FrameRecorder()
+    semantic_mapper = SemanticActionMapper()
 
+    recorder = FrameRecorder()
 
     try:
 
@@ -56,6 +59,7 @@ def main():
 
             timestamp_ms = data["timestamp_ms"]
 
+
             detections = detector.detect(
                 frame
             )
@@ -64,31 +68,31 @@ def main():
                 detections
             )
 
-            class_names = {
 
+            # RESTORE CLASS NAMES
+            # ByteTrack currently gives us class_id.
+            # Map that ID back to the detector's class name.
+
+            class_names = {
                 detection["class_id"]:
                 detection["class_name"]
-
                 for detection in detections
             }
 
-
             tracked_objects = [
-
                 {
                     **tracked_object,
 
                     "class_name":
-                        class_names.get(
-                            tracked_object["class_id"],
-                            "unknown"
-                        ),
+                    class_names.get(
+                        tracked_object["class_id"],
+                        "unknown"
+                    ),
                 }
 
                 for tracked_object
                 in tracked_objects
             ]
-
 
             height, width = frame.shape[:2]
 
@@ -115,104 +119,77 @@ def main():
 
             action_events = []
 
+            semantic_events = []
 
             for interaction in interactions:
 
                 if interaction["state"] == "NONE":
-
                     continue
 
-
-
-                object_class = (
-                    interaction.get(
-                        "object_class"
-                    )
+                object_class = interaction.get(
+                    "object_class"
                 )
 
-                track_id = (
-                    interaction.get(
-                        "track_id"
-                    )
+                track_id = interaction.get(
+                    "track_id"
                 )
-
 
                 object_bbox = None
 
-
                 for obj in tracked_objects:
 
-                    if (
-                        obj["track_id"]
-                        == track_id
-                    ):
+                    if obj["track_id"] == track_id:
 
-                        object_bbox = (
-                            obj["bbox"]
-                        )
+                        object_bbox = obj["bbox"]
 
                         break
 
-
-                hand_point = (
-                    interaction.get(
-                        "hand_reference_point"
-                    )
+                hand_point = interaction.get(
+                    "hand_reference_point"
                 )
 
-
                 hand_position = None
-
 
                 if hand_point is not None:
 
                     hand_position = (
-
                         hand_point["x"],
-
                         hand_point["y"],
                     )
 
-
-                confidence = (
-                    interaction.get(
-                        "confidence",
-                        0.0
-                    )
+                confidence = interaction.get(
+                    "confidence",
+                    0.0
                 )
 
+                interaction_frame = InteractionFrame(
 
-                interaction_frame = (
-                    InteractionFrame(
+                    frame_id=frame_id,
 
-                        frame_id=frame_id,
+                    interaction_state=(
+                        interaction["state"]
+                    ),
 
-                        interaction_state=(
-                            interaction["state"]
-                        ),
+                    object_class=(
+                        object_class
+                    ),
 
-                        object_class=(
-                            object_class
-                        ),
+                    track_id=(
+                        track_id
+                    ),
 
-                        track_id=(
-                            track_id
-                        ),
+                    object_bbox=(
+                        object_bbox
+                    ),
 
-                        object_bbox=(
-                            object_bbox
-                        ),
+                    hand_position=(
+                        hand_position
+                    ),
 
-                        hand_position=(
-                            hand_position
-                        ),
-
-                        interaction_confidence=(
-                            confidence
-                        ),
-                    )
+                    interaction_confidence=(
+                        confidence
+                    ),
                 )
-
 
                 action_event = (
                     action_recognizer.update(
@@ -220,12 +197,51 @@ def main():
                     )
                 )
 
-
                 if action_event is not None:
 
                     action_events.append(
                         action_event
                     )
+
+                    print(
+                        "\n[ACTION] "
+                        f"{action_event.action} | "
+                        f"Object: "
+                        f"{action_event.object_class} | "
+                        f"Track: "
+                        f"{action_event.track_id} | "
+                        f"Frames: "
+                        f"{action_event.start_frame}-"
+                        f"{action_event.end_frame} | "
+                        f"Confidence: "
+                        f"{action_event.confidence:.2f}"
+                    )
+
+                    semantic_event = (
+                        semantic_mapper.map_action(
+                            action_event
+                        )
+                    )
+
+                    if semantic_event is not None:
+
+                        semantic_events.append(
+                            semantic_event
+                        )
+
+                        print(
+                            "[SEMANTIC ACTION] "
+                            f"{semantic_event.action} | "
+                            f"Object: "
+                            f"{semantic_event.object_class} | "
+                            f"Track: "
+                            f"{semantic_event.track_id} | "
+                            f"Frames: "
+                            f"{semantic_event.start_frame}-"
+                            f"{semantic_event.end_frame} | "
+                            f"Confidence: "
+                            f"{semantic_event.confidence:.2f}"
+                        )
 
             frame_data = FrameData(
 
@@ -234,26 +250,24 @@ def main():
                 timestamp_ms=timestamp_ms,
 
                 objects=[
-
                     {
                         "class_name":
-                            obj["class_name"],
+                        obj["class_name"],
 
                         "class_id":
-                            obj["class_id"],
+                        obj["class_id"],
 
                         "bbox":
-                            obj["bbox"],
+                        obj["bbox"],
 
                         "confidence":
-                            obj["confidence"],
+                        obj["confidence"],
 
                         "track_id":
-                            obj["track_id"]
+                        obj["track_id"]
                     }
 
-                    for obj
-                    in tracked_objects
+                    for obj in tracked_objects
                 ],
 
                 pose=pose,
@@ -263,7 +277,6 @@ def main():
                 interactions=interactions,
             )
 
-
             detection_data = asdict(
                 frame_data
             )
@@ -272,43 +285,17 @@ def main():
                 detection_data
             )
 
-            for action_event in action_events:
-
-                print(
-                    "\n"
-                    "[ACTION] "
-                    f"{action_event.action} | "
-                    f"Object: "
-                    f"{action_event.object_class} | "
-                    f"Track: "
-                    f"{action_event.track_id} | "
-                    f"Frames: "
-                    f"{action_event.start_frame}"
-                    f"-"
-                    f"{action_event.end_frame} | "
-                    f"Confidence: "
-                    f"{action_event.confidence:.2f}"
-                )
-
             for obj in frame_data.objects:
 
-                x1, y1, x2, y2 = (
-                    obj["bbox"]
-                )
-
+                x1, y1, x2, y2 = obj["bbox"]
 
                 label = (
-
                     f'{obj["class_name"]} '
-
                     f'ID:{obj["track_id"]} '
-
                     f'{obj["confidence"]:.2f}'
                 )
 
-
                 cv2.rectangle(
-
                     frame,
 
                     (x1, y1),
@@ -320,9 +307,7 @@ def main():
                     2
                 )
 
-
                 cv2.putText(
-
                     frame,
 
                     label,
@@ -341,32 +326,23 @@ def main():
             for interaction in interactions:
 
                 if interaction["state"] == "NONE":
-
                     continue
-
 
                 point = interaction[
                     "hand_reference_point"
                 ]
 
-
                 x = point["x"]
 
                 y = point["y"]
 
-
                 label = (
-
                     f'{interaction["hand"]} -> '
-
                     f'{interaction["object_class"]}: '
-
                     f'{interaction["state"]}'
                 )
 
-
                 cv2.putText(
-
                     frame,
 
                     label,
@@ -382,26 +358,17 @@ def main():
                     2
                 )
 
-
             if action_events:
 
-                latest_action = (
-                    action_events[-1]
-                )
-
+                latest_action = action_events[-1]
 
                 action_text = (
-
                     f"ACTION: "
-
                     f"{latest_action.action} "
-
                     f"{latest_action.object_class}"
                 )
 
-
                 cv2.putText(
-
                     frame,
 
                     action_text,
@@ -417,9 +384,34 @@ def main():
                     2
                 )
 
+            if semantic_events:
+
+                latest_semantic = (
+                    semantic_events[-1]
+                )
+
+                semantic_text = (
+                    f"SEMANTIC: "
+                    f"{latest_semantic.action}"
+                )
+
+                cv2.putText(
+                    frame,
+
+                    semantic_text,
+
+                    (20, 95),
+
+                    cv2.FONT_HERSHEY_SIMPLEX,
+
+                    0.7,
+
+                    (255, 255, 0),
+
+                    2
+                )
 
             cv2.putText(
-
                 frame,
 
                 f"Frame: {frame_id}",
@@ -435,24 +427,15 @@ def main():
                 2
             )
 
-
             cv2.imshow(
-
                 "BAS-HAR Vision",
-
                 frame
             )
 
-            if (
-                cv2.waitKey(1) & 0xFF
-                == 27
-            ):
-
+            if cv2.waitKey(1) & 0xFF == 27:
                 break
 
-
     finally:
-
 
         recorder.close()
 
@@ -466,5 +449,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()
