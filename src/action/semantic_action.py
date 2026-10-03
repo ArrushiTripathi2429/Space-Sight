@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Optional
-
 from action.action_recognizer import ActionEvent
 
 
@@ -26,7 +25,6 @@ class SemanticActionMapper:
 
     def __init__(self):
 
-        # ----------------------------------------------------
         # Mapping between physical actions and experiment
         # objects.
         #
@@ -35,7 +33,6 @@ class SemanticActionMapper:
         # PICK + red_box
         #       ↓
         # PICK_RED
-        # ----------------------------------------------------
 
         self.action_map = {
 
@@ -100,19 +97,3 @@ class SemanticActionMapper:
             ),
         )
 
-if __name__ == "__main__":
-
-    event = ActionEvent(
-        action="PICK",
-        object_class="red_box",
-        track_id=5,
-        start_frame=100,
-        end_frame=130,
-        confidence=0.92,
-    )
-
-    mapper = SemanticActionMapper()
-
-    result = mapper.map_action(event)
-
-    print(result)
