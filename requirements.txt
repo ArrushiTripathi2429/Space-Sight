@@ -22,3 +22,5 @@ sounddevice==0.5.6
 tzdata==2026.3
 ultralytics
 supervision
+streamlit
+streamlit-webrtc
