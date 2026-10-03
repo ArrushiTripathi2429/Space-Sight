@@ -1,5 +1,15 @@
  # BAS HAR: AI Human Activity Recognition for Onboard Experiments
 
+## Live dashboard
+
+From the repository root, start the webcam perception dashboard with:
+
+```powershell
+python -m streamlit run dashboard.py
+```
+
+Open the displayed local URL, allow browser camera access, and click **START**. The returned video contains object, hand, pose, and interaction overlays. Each run is recorded under `data/processed/` as newline-delimited JSON.
+
  Final architecture, end-to-end pipeline, and prototype plan for an offline, experiment-aware Human Activity Recognition (HAR) co-pilot.
 
  ## 1. Overview
