@@ -1,0 +1,11 @@
+{
+    "start_state": "START",
+
+    "sequence": [
+        "PICK_RED",
+        "PLACE_RED",
+        "PICK_YELLOW",
+        "PLACE_YELLOW",
+        "CLOSE_CONTAINER"
+    ]
+}
